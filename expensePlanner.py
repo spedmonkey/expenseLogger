@@ -37,24 +37,31 @@ class Example(QtGui.QWidget):
         actionLayout.addWidget(self.shapeTypeCB)
         actionLayout.addWidget(self.myDate)
         actionLayout.addWidget(self.receipt)
-
         actionLayout.addWidget(self.amount)
-
-
         actionLayout.addWidget(self.submitBtn)
-
 
         #Connecting Signals
         self.submitBtn.clicked.connect(self.writeData)
         #self.connect(self.shapeTypeCB, QtCore.SIGNAL("currentIndexChanged(int)"), self.changeLabels)
         #self.connect(self.saveBtn, QtCore.SIGNAL("clicked()"), self.saveButton)
         #self.connect(self.loadBtn, QtCore.SIGNAL("clicked()"), self.loadAttr)
-
         self.show()
 
+    def buttonPressed(self):
+        try:
+            self. copyImage()
+            self.writeData()
+            print 'data written'
+        except:
+            print "fail"
+
     def copyImage(self):
-        receiptDate=str(self.myDate)("%Y-%m-%d %H:%M:%S", gmtime())
-        os.system("cp {0} ./reportData/{1}_{2}.jpg".format(self.receipt.text(),self.description.text(), receiptDate))
+        self.receiptDate = self.myDate.date().toPyDate()
+        os.system(
+               "cp {0} ./reportData/{1}_{2}.jpg".format( self.receipt.text(),self.description.text(), self.receiptDate)
+               )
+        self.copyImageOutput="success"
+        print "{0} receipt saved".format (self.description.text() )
 
     def getData(self):
         description=str(self.description.text())
@@ -64,13 +71,30 @@ class Example(QtGui.QWidget):
         self.expenseReport[description]=[["description", description],["category", category ],['amount',amount]]
         return self.expenseReport
 
+    def mergeData(self):
+        myList=[]
+        try:
+            myList=self.readData()
+        except:
+            myList=[]
+            pass
+        myList.append([self.getData()])
+    return myList
+
 
     def writeData(self):
         with open("./reportData/expenseReport.json", mode="a") as feedsjson:
-            json.dump(self.getData(), feedsjson, indent=4)
+            json.dump(myList, feedsjson, indent=4)
             feedsjson.write('\n')
-        print 'data saved'
         self.copyImage()
+
+    def readData(self):
+        try:
+            with open (self.sceneDirectory+"./reportData/expenseReport.json") as feedsjson:
+                expenseReport=json.load(feedsjson)
+        except:
+            expenseReport = []
+        return  expenseReport
 
 def main():
     app = QtGui.QApplication(sys.argv)
@@ -78,4 +102,4 @@ def main():
     sys.exit(app.exec_())
 
 if __name__ == '__main__':
-    main()    
+    main()
